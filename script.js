@@ -37,56 +37,41 @@ const katakana = [
     { front: "ン", back: "n" }
 ];
 
-let currentMode = [];
 let currentSet = [];
 let currentCardIndex = 0;
-let wrongAnswers = [];
-let correctCount = 0;
 
 function startMode(mode) {
-    currentMode = mode === "hiragana" ? [...hiragana] : [...katakana];
-    generateSet();
+    const allCards = mode === "hiragana" ? [...hiragana] : [...katakana];
+    currentSet = allCards.sort(() => Math.random() - 0.5).slice(0, 10);
+    currentCardIndex = 0;
     document.getElementById("mode-selection").style.display = "none";
     document.getElementById("flashcard-container").style.display = "block";
     document.getElementById("results").style.display = "none";
-    correctCount = 0;
-    showCard(currentCardIndex);
+    showCard();
     updateCounter();
 }
 
-function generateSet() {
-    currentSet = currentMode.sort(() => Math.random() - 0.5).slice(0, 10);
-    currentCardIndex = 0;
-    wrongAnswers = [];
-}
-
-function showCard(index) {
-    const card = currentSet[index];
-    const front = document.querySelector(".flashcard .front");
-    const back = document.querySelector(".flashcard .back");
-    front.textContent = card.front;
-    back.textContent = "";
-    document.querySelector(".flashcard").classList.remove("flipped");
+function showCard() {
+    const card = currentSet[currentCardIndex];
+    const flashcard = document.querySelector(".flashcard");
+    flashcard.classList.remove("flipped");
+    flashcard.querySelector(".front").textContent = card.front;
+    flashcard.querySelector(".back").textContent = card.back;
 }
 
 function flipCard() {
-    const back = document.querySelector(".flashcard .back");
-    back.textContent = currentSet[currentCardIndex].back;
-    document.querySelector(".flashcard").classList.add("flipped");
+    const flashcard = document.querySelector(".flashcard");
+    flashcard.classList.toggle("flipped");
 }
 
 function markAnswer(isCorrect) {
-    if (!isCorrect) wrongAnswers.push(currentSet[currentCardIndex]);
-    correctCount += isCorrect ? 1 : 0;
-
-    if (currentCardIndex === currentSet.length - 1) {
+    if (currentCardIndex < currentSet.length - 1) {
+        currentCardIndex++;
+        showCard();
+        updateCounter();
+    } else {
         showResults();
-        return;
     }
-
-    currentCardIndex++;
-    showCard(currentCardIndex);
-    updateCounter();
 }
 
 function updateCounter() {
@@ -97,16 +82,10 @@ function showResults() {
     const resultsDiv = document.getElementById("results");
     resultsDiv.style.display = "block";
     document.getElementById("flashcard-container").style.display = "none";
-
-    const wrongList = wrongAnswers.map(
-        card => `<div>${card.front} - ${card.back}</div>`
-    ).join("");
-
     resultsDiv.innerHTML = `
-        <h3>Results</h3>
-        <p>Correct: ${correctCount}</p>
-        <p>Incorrect: ${wrongAnswers.length}</p>
-        <div>${wrongList}</div>
-        <button onclick="generateSet(); document.getElementById('flashcard-container').style.display = 'block'; document.getElementById('results').style.display = 'none'; showCard(0); updateCounter();">Next Set</button>
+        <h3>Set Complete</h3>
+        <button onclick="startMode('hiragana')">Next Hiragana Set</button>
+        <button onclick="startMode('katakana')">Next Katakana Set</button>
+        <button onclick="document.getElementById('mode-selection').style.display = 'block'; document.getElementById('results').style.display = 'none';">Back to Mode Selection</button>
     `;
 }
