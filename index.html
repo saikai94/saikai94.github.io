@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Hiragana & Katakana</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="mode-selection">
+        <button class="mode-button" onclick="startMode('hiragana')">Learn Hiragana</button>
+        <button class="mode-button" onclick="startMode('katakana')">Learn Katakana</button>
+    </div>
+    <div id="flashcard-container" style="display: none;">
+        <div class="flashcard">
+            <div class="front"></div>
+            <div class="back"></div>
+        </div>
+        <div id="controls">
+            <button class="response-button correct" onclick="markAnswer(true)">✔️</button>
+            <button class="response-button incorrect" onclick="markAnswer(false)">❌</button>
+        </div>
+        <div id="counter">0/10</div>
+    </div>
+    <div id="results" style="display: none;"></div>
+    <script src="script.js"></script>
+</body>
+</html>
