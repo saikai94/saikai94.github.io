@@ -39,6 +39,7 @@ body {
     position: relative;
     perspective: 1000px;
     margin: 20px auto;
+    cursor: pointer;
 }
 
 .flashcard .front, .flashcard .back {
