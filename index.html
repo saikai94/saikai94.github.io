@@ -1,32 +1,504 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Learn Hiragana & Katakana</title>
-    <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Japanese Kana Practice</title>
+<style>
+  :root {
+    --bg-color-light: #f9f9f9;
+    --text-color-light: #333;
+    --card-bg-light: #fff;
+    --bg-color-dark: #222;
+    --text-color-dark: #eee;
+    --card-bg-dark: #333;
+  }
+
+  body {
+    margin: 0; padding:0; 
+    font-family: sans-serif;
+    background-color: var(--bg-color-light);
+    color: var(--text-color-light);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  body.dark-mode {
+    background-color: var(--bg-color-dark);
+    color: var(--text-color-dark);
+  }
+
+  header, footer {
+    padding: 1em;
+    text-align: center;
+  }
+
+  .toggle-container {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    cursor:pointer;
+    background: #ccc;
+    padding:5px 10px;
+    border-radius:5px;
+  }
+
+  .content {
+    flex:1;
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .splash-screen {
+    text-align:center;
+  }
+
+  .splash-screen h1 {
+    margin-bottom: 1em;
+  }
+
+  .options {
+    display:flex;
+    flex-direction: column;
+    gap:1em;
+  }
+
+  .options button {
+    padding:0.7em 1em;
+    font-size:1.2em;
+    cursor:pointer;
+    border:none;
+    border-radius:5px;
+    background:#0066cc;
+    color:#fff;
+  }
+
+  body.dark-mode .options button {
+    background:#3399ff;
+  }
+
+  .flashcard-container {
+    text-align:center;
+  }
+
+  .flashcard {
+    position: relative;
+    width: 200px;
+    height: 120px;
+    margin: 2em auto;
+    background: var(--card-bg-light);
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    font-size:2em;
+    border-radius:8px;
+    box-shadow:0 0 5px rgba(0,0,0,0.2);
+    cursor:pointer;
+  }
+
+  body.dark-mode .flashcard {
+    background: var(--card-bg-dark);
+  }
+
+  .answer-buttons {
+    display:flex;
+    gap:1em;
+    justify-content:center;
+  }
+
+  .answer-buttons button {
+    padding:0.5em 1em;
+    font-size:1em;
+    cursor:pointer;
+    border:none;
+    border-radius:5px;
+    color:#fff;
+  }
+
+  #correctBtn {
+    background: #28a745; /* green */
+  }
+  #correctBtn::before {
+    content: "✓ ";
+  }
+
+  #wrongBtn {
+    background: #dc3545; /* red */
+  }
+  #wrongBtn::before {
+    content: "✗ ";
+  }
+
+  body.dark-mode #correctBtn {
+    background: #2ecc71; 
+  }
+
+  body.dark-mode #wrongBtn {
+    background: #e74c3c; 
+  }
+
+  .score-screen {
+    text-align:center;
+  }
+
+  .score-screen h2 {
+    margin-bottom:1em;
+  }
+
+  .wrong-list {
+    margin-top:1em;
+  }
+
+  .wrong-list p {
+    margin:0.5em 0;
+  }
+
+  .back-button {
+    margin-top:2em;
+    padding:0.5em 1em;
+    font-size:1em;
+    cursor:pointer;
+    background:#444;
+    color:#fff;
+    border:none;
+    border-radius:5px;
+  }
+
+  body.dark-mode .back-button {
+    background:#555;
+  }
+</style>
 </head>
 <body>
-    <button id="dark-mode-toggle" onclick="toggleDarkMode()">🌙</button>
-    <button id="back-to-selection" onclick="backToSelection()" style="display: none;">Back to Selection</button>
-    <div id="mode-selection">
-        <button class="mode-button" onclick="startMode('hiragana')">Learn Hiragana</button>
-        <button class="mode-button" onclick="startMode('katakana')">Learn Katakana</button>
-        <button class="mode-button" onclick="startMode('hiraganaWords')">Learn Hiragana Words</button>
-        <button class="mode-button" onclick="startMode('katakanaWords')">Learn Katakana Words</button>
+<div class="toggle-container" id="modeToggle">Toggle Dark/Light</div>
+<div class="content" id="app">
+
+  <!-- Splash Screen -->
+  <div class="splash-screen" id="splashScreen">
+    <h1>Select a Study Mode</h1>
+    <div class="options">
+      <button data-mode="hiragana">Hiragana</button>
+      <button data-mode="katakana">Katakana</button>
+      <button data-mode="hiraganaWords">Hiragana Words</button>
+      <button data-mode="katakanaWords">Katakana Words</button>
     </div>
-    <div id="flashcard-container" style="display: none;">
-        <div class="flashcard" onclick="flipCard()">
-            <div class="front"></div>
-            <div class="back"></div>
-        </div>
-        <div id="controls">
-            <button class="response-button correct" onclick="markAnswer(true)">✔️</button>
-            <button class="response-button incorrect" onclick="markAnswer(false)">❌</button>
-        </div>
-        <div id="counter">0/10</div>
+  </div>
+
+  <!-- Flashcard and Quiz Screen -->
+  <div class="flashcard-container" id="flashcardScreen" style="display:none;">
+    <div class="flashcard" id="flashcard">A</div>
+
+    <div class="answer-buttons">
+      <button id="correctBtn">Correct</button>
+      <button id="wrongBtn">Wrong</button>
     </div>
-    <div id="results" style="display: none;"></div>
-    <script src="script.js"></script>
+  </div>
+
+  <!-- Score Screen -->
+  <div class="score-screen" id="scoreScreen" style="display:none;">
+    <h2>Your Score: <span id="scoreResult"></span>/10</h2>
+    <div class="wrong-list" id="wrongList"></div>
+    <button class="back-button" id="backToMenuBtn">Back to Menu</button>
+  </div>
+
+</div>
+
+<script>
+  // Full hiragana set
+  const hiragana = [
+    {char:"あ", romaji:"a"},{char:"い", romaji:"i"},{char:"う", romaji:"u"},{char:"え", romaji:"e"},{char:"お", romaji:"o"},
+    {char:"か", romaji:"ka"},{char:"き", romaji:"ki"},{char:"く", romaji:"ku"},{char:"け", romaji:"ke"},{char:"こ", romaji:"ko"},
+    {char:"さ", romaji:"sa"},{char:"し", romaji:"shi"},{char:"す", romaji:"su"},{char:"せ", romaji:"se"},{char:"そ", romaji:"so"},
+    {char:"た", romaji:"ta"},{char:"ち", romaji:"chi"},{char:"つ", romaji:"tsu"},{char:"て", romaji:"te"},{char:"と", romaji:"to"},
+    {char:"な", romaji:"na"},{char:"に", romaji:"ni"},{char:"ぬ", romaji:"nu"},{char:"ね", romaji:"ne"},{char:"の", romaji:"no"},
+    {char:"は", romaji:"ha"},{char:"ひ", romaji:"hi"},{char:"ふ", romaji:"fu"},{char:"へ", romaji:"he"},{char:"ほ", romaji:"ho"},
+    {char:"ま", romaji:"ma"},{char:"み", romaji:"mi"},{char:"む", romaji:"mu"},{char:"め", romaji:"me"},{char:"も", romaji:"mo"},
+    {char:"や", romaji:"ya"},{char:"ゆ", romaji:"yu"},{char:"よ", romaji:"yo"},
+    {char:"ら", romaji:"ra"},{char:"り", romaji:"ri"},{char:"る", romaji:"ru"},{char:"れ", romaji:"re"},{char:"ろ", romaji:"ro"},
+    {char:"わ", romaji:"wa"},{char:"を", romaji:"wo"},{char:"ん", romaji:"n"}
+  ];
+
+  // Full katakana set
+  const katakana = [
+    {char:"ア", romaji:"a"},{char:"イ", romaji:"i"},{char:"ウ", romaji:"u"},{char:"エ", romaji:"e"},{char:"オ", romaji:"o"},
+    {char:"カ", romaji:"ka"},{char:"キ", romaji:"ki"},{char:"ク", romaji:"ku"},{char:"ケ", romaji:"ke"},{char:"コ", romaji:"ko"},
+    {char:"サ", romaji:"sa"},{char:"シ", romaji:"shi"},{char:"ス", romaji:"su"},{char:"セ", romaji:"se"},{char:"ソ", romaji:"so"},
+    {char:"タ", romaji:"ta"},{char:"チ", romaji:"chi"},{char:"ツ", romaji:"tsu"},{char:"テ", romaji:"te"},{char:"ト", romaji:"to"},
+    {char:"ナ", romaji:"na"},{char:"ニ", romaji:"ni"},{char:"ヌ", romaji:"nu"},{char:"ネ", romaji:"ne"},{char:"ノ", romaji:"no"},
+    {char:"ハ", romaji:"ha"},{char:"ヒ", romaji:"hi"},{char:"フ", romaji:"fu"},{char:"ヘ", romaji:"he"},{char:"ホ", romaji:"ho"},
+    {char:"マ", romaji:"ma"},{char:"ミ", romaji:"mi"},{char:"ム", romaji:"mu"},{char:"メ", romaji:"me"},{char:"モ", romaji:"mo"},
+    {char:"ヤ", romaji:"ya"},{char:"ユ", romaji:"yu"},{char:"ヨ", romaji:"yo"},
+    {char:"ラ", romaji:"ra"},{char:"リ", romaji:"ri"},{char:"ル", romaji:"ru"},{char:"レ", romaji:"re"},{char:"ロ", romaji:"ro"},
+    {char:"ワ", romaji:"wa"},{char:"ヲ", romaji:"wo"},{char:"ン", romaji:"n"}
+  ];
+
+  // 50 Hiragana words
+  const hiraganaWords = [
+    {char:"あお", romaji:"ao (blue)"},
+    {char:"いぬ", romaji:"inu (dog)"},
+    {char:"ねこ", romaji:"neko (cat)"},
+    {char:"はな", romaji:"hana (flower)"},
+    {char:"くるま", romaji:"kuruma (car)"},
+    {char:"みず", romaji:"mizu (water)"},
+    {char:"やま", romaji:"yama (mountain)"},
+    {char:"さかな", romaji:"sakana (fish)"},
+    {char:"かわ", romaji:"kawa (river)"},
+    {char:"き", romaji:"ki (tree)"},
+    {char:"いえ", romaji:"ie (house)"},
+    {char:"ともだち", romaji:"tomodachi (friend)"},
+    {char:"はし", romaji:"hashi (bridge/chopsticks)"},
+    {char:"ほん", romaji:"hon (book)"},
+    {char:"やさい", romaji:"yasai (vegetables)"},
+    {char:"くだもの", romaji:"kudamono (fruit)"},
+    {char:"まち", romaji:"machi (town)"},
+    {char:"くち", romaji:"kuchi (mouth)"},
+    {char:"め", romaji:"me (eye)"},
+    {char:"みみ", romaji:"mimi (ear)"},
+    {char:"くつ", romaji:"kutsu (shoes)"},
+    {char:"かさ", romaji:"kasa (umbrella)"},
+    {char:"あさ", romaji:"asa (morning)"},
+    {char:"ひる", romaji:"hiru (noon)"},
+    {char:"よる", romaji:"yoru (night)"},
+    {char:"おちゃ", romaji:"ocha (tea)"},
+    {char:"すし", romaji:"sushi (sushi)"},
+    {char:"ごはん", romaji:"gohan (rice/meal)"},
+    {char:"にほん", romaji:"nihon (Japan)"},
+    {char:"えいご", romaji:"eigo (English)"},
+    {char:"せんせい", romaji:"sensei (teacher)"},
+    {char:"がくせい", romaji:"gakusei (student)"},
+    {char:"でんしゃ", romaji:"densha (train)"},
+    {char:"じてんしゃ", romaji:"jitensha (bicycle)"},
+    {char:"くうこう", romaji:"kuukou (airport)"},
+    {char:"きっぷ", romaji:"kippu (ticket)"},
+    {char:"つくえ", romaji:"tsukue (desk)"},
+    {char:"いす", romaji:"isu (chair)"},
+    {char:"まど", romaji:"mado (window)"},
+    {char:"どあ", romaji:"doa (door)"},
+    {char:"けいたい", romaji:"keitai (cell phone)"},
+    {char:"でんき", romaji:"denki (light/electricity)"},
+    {char:"かぞく", romaji:"kazoku (family)"},
+    {char:"ちず", romaji:"chizu (map)"},
+    {char:"おかね", romaji:"okane (money)"},
+    {char:"うた", romaji:"uta (song)"},
+    {char:"え", romaji:"e (picture/drawing)"},
+    {char:"おんがく", romaji:"ongaku (music)"},
+    {char:"まいにち", romaji:"mainichi (everyday)"},
+    {char:"きょう", romaji:"kyou (today)"}
+  ];
+
+  // 50 Katakana words
+  const katakanaWords = [
+    {char:"アイス", romaji:"aisu (ice)"},
+    {char:"ケーキ", romaji:"keeki (cake)"},
+    {char:"テレビ", romaji:"terebi (TV)"},
+    {char:"ビール", romaji:"biiru (beer)"},
+    {char:"パン", romaji:"pan (bread)"},
+    {char:"コーヒー", romaji:"koohii (coffee)"},
+    {char:"ペン", romaji:"pen (pen)"},
+    {char:"サッカー", romaji:"sakkaa (soccer)"},
+    {char:"ピザ", romaji:"piza (pizza)"},
+    {char:"ゲーム", romaji:"geemu (game)"},
+    {char:"タクシー", romaji:"takushii (taxi)"},
+    {char:"ホテル", romaji:"hoteru (hotel)"},
+    {char:"レストラン", romaji:"resutoran (restaurant)"},
+    {char:"スーパー", romaji:"suupaa (supermarket)"},
+    {char:"コンピューター", romaji:"konpyuutaa (computer)"},
+    {char:"インターネット", romaji:"intaanetto (internet)"},
+    {char:"メール", romaji:"meeru (email)"},
+    {char:"カメラ", romaji:"kamera (camera)"},
+    {char:"シャツ", romaji:"shatsu (shirt)"},
+    {char:"ズボン", romaji:"zubon (trousers)"},
+    {char:"トイレ", romaji:"toire (toilet)"},
+    {char:"ベッド", romaji:"beddo (bed)"},
+    {char:"ドア", romaji:"doa (door)"},
+    {char:"ボール", romaji:"booru (ball)"},
+    {char:"バス", romaji:"basu (bus)"},
+    {char:"トラック", romaji:"torakku (truck)"},
+    {char:"バイク", romaji:"baiku (motorbike)"},
+    {char:"エアコン", romaji:"eakon (air conditioner)"},
+    {char:"ソファ", romaji:"sofa (sofa)"},
+    {char:"テーブル", romaji:"teeburu (table)"},
+    {char:"カレー", romaji:"karee (curry)"},
+    {char:"スプーン", romaji:"supuun (spoon)"},
+    {char:"フォーク", romaji:"fooku (fork)"},
+    {char:"ナイフ", romaji:"naifu (knife)"},
+    {char:"サンドイッチ", romaji:"sandoicchi (sandwich)"},
+    {char:"チーズ", romaji:"chiizu (cheese)"},
+    {char:"ハンバーガー", romaji:"hanbaagaa (hamburger)"},
+    {char:"ラーメン", romaji:"raamen (ramen)"},
+    {char:"アイスクリーム", romaji:"aisukuriimu (ice cream)"},
+    {char:"ジュース", romaji:"juusu (juice)"},
+    {char:"ワイン", romaji:"wain (wine)"},
+    {char:"ウイスキー", romaji:"uisukii (whiskey)"},
+    {char:"ミルク", romaji:"miruku (milk)"},
+    {char:"チケット", romaji:"chiketto (ticket)"},
+    {char:"クラス", romaji:"kurasu (class)"},
+    {char:"テスト", romaji:"tesuto (test)"},
+    {char:"ニュース", romaji:"nyuusu (news)"},
+    {char:"フィルム", romaji:"firumu (film)"},
+    {char:"タオル", romaji:"taoru (towel)"},
+    {char:"ネクタイ", romaji:"nekutai (necktie)"}
+  ];
+
+  let currentMode = "";
+  let currentIndex = 0;
+  let wrongAnswers = [];
+  let isShowingChar = true; // track what is currently displayed on the flashcard
+
+  let activeSet = [];
+  let currentPosition = 0; // position in the activeSet
+
+  const splashScreen = document.getElementById("splashScreen");
+  const flashcardScreen = document.getElementById("flashcardScreen");
+  const scoreScreen = document.getElementById("scoreScreen");
+  const flashcard = document.getElementById("flashcard");
+  const correctBtn = document.getElementById("correctBtn");
+  const wrongBtn = document.getElementById("wrongBtn");
+  const scoreResult = document.getElementById("scoreResult");
+  const wrongList = document.getElementById("wrongList");
+  const backToMenuBtn = document.getElementById("backToMenuBtn");
+  const modeToggle = document.getElementById("modeToggle");
+
+  // Dark mode toggle
+  modeToggle.addEventListener("click", () => {
+    document.body.classList.toggle("dark-mode");
+  });
+
+  splashScreen.addEventListener("click", (e) => {
+    if (e.target.tagName === "BUTTON") {
+      currentMode = e.target.getAttribute("data-mode");
+      initializeSet(currentMode);
+      startQuiz();
+    }
+  });
+
+  flashcard.addEventListener("click", () => {
+    toggleCard();
+  });
+
+  correctBtn.addEventListener("click", () => {
+    currentIndex++;
+    nextCard();
+  });
+
+  wrongBtn.addEventListener("click", () => {
+    wrongAnswers.push(activeSet[currentPosition + currentIndex]);
+    currentIndex++;
+    nextCard();
+  });
+
+  backToMenuBtn.addEventListener("click", () => {
+    showSplash();
+  });
+
+  function showSplash() {
+    splashScreen.style.display = "block";
+    flashcardScreen.style.display = "none";
+    scoreScreen.style.display = "none";
+    wrongAnswers = [];
+    currentIndex = 0;
+    currentMode = "";
+  }
+
+  function initializeSet(mode) {
+    let baseSet = [];
+    if(mode === "hiragana") baseSet = hiragana;
+    else if(mode === "katakana") baseSet = katakana;
+    else if(mode === "hiraganaWords") baseSet = hiraganaWords;
+    else if(mode === "katakanaWords") baseSet = katakanaWords;
+
+    // Shuffle once and store in activeSet
+    activeSet = baseSet.slice().sort(() => Math.random() - 0.5);
+    currentPosition = 0;
+  }
+
+  function startQuiz() {
+    splashScreen.style.display = "none";
+    scoreScreen.style.display = "none";
+    flashcardScreen.style.display = "block";
+    currentIndex = 0;
+    wrongAnswers = [];
+    showCard(activeSet[currentPosition + currentIndex]);
+  }
+
+  function showCard(item) {
+    isShowingChar = true;
+    flashcard.textContent = item.char;
+  }
+
+  function toggleCard() {
+    const item = activeSet[currentPosition + currentIndex];
+    if(!item) return;
+    if(isShowingChar) {
+      flashcard.textContent = item.romaji;
+      isShowingChar = false;
+    } else {
+      flashcard.textContent = item.char;
+      isShowingChar = true;
+    }
+  }
+
+  function nextCard() {
+    if(currentIndex < 10 && (currentPosition + currentIndex) < activeSet.length) {
+      showCard(activeSet[currentPosition + currentIndex]);
+    } else {
+      // All 10 done or at end of activeSet
+      showScore();
+    }
+  }
+
+  function showScore() {
+    flashcardScreen.style.display = "none";
+    scoreScreen.style.display = "block";
+    const correctCount = 10 - wrongAnswers.length;
+    scoreResult.textContent = correctCount;
+    wrongList.innerHTML = "";
+
+    if(wrongAnswers.length > 0) {
+      wrongList.innerHTML = "<h3>You got these wrong:</h3>";
+      wrongAnswers.forEach(item => {
+        let p = document.createElement("p");
+        p.textContent = `${item.char} - ${item.romaji}`;
+        wrongList.appendChild(p);
+      });
+
+      let repeatBtn = document.createElement("button");
+      repeatBtn.textContent = "Review Wrong Ones";
+      repeatBtn.className = "back-button";
+      repeatBtn.addEventListener("click", () => {
+        // Now focus on wrong items
+        activeSet = wrongAnswers.slice();
+        wrongAnswers = [];
+        currentIndex = 0;
+        currentPosition = 0;
+        scoreScreen.style.display = "none";
+        flashcardScreen.style.display = "block";
+        showCard(activeSet[currentPosition + currentIndex]);
+      });
+      wrongList.appendChild(repeatBtn);
+
+    } else {
+      // Perfect score, move to the next 10 in activeSet
+      currentPosition += 10;
+      // If we reached the end of activeSet, reshuffle
+      if(currentPosition >= activeSet.length) {
+        currentPosition = 0;
+        activeSet = activeSet.slice().sort(() => Math.random() - 0.5);
+      }
+
+      let newSetBtn = document.createElement("button");
+      newSetBtn.textContent = "New Set";
+      newSetBtn.className = "back-button";
+      newSetBtn.addEventListener("click", () => {
+        startQuiz();
+      });
+      wrongList.appendChild(newSetBtn);
+    }
+  }
+</script>
 </body>
 </html>
