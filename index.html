@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<!-- Prevent zooming on double-tap (on iOS and Android) -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>Japanese Kana Practice</title>
 <style>
   :root {
@@ -12,6 +13,7 @@
     --bg-color-dark: #222;
     --text-color-dark: #eee;
     --card-bg-dark: #333;
+    --button-radius: 12px;
   }
 
   body {
@@ -23,16 +25,12 @@
     flex-direction: column;
     min-height: 100vh;
     transition: background-color 0.3s ease, color 0.3s ease;
+    font-size: calc(10px + 1vmin);
   }
 
   body.dark-mode {
     background-color: var(--bg-color-dark);
     color: var(--text-color-dark);
-  }
-
-  header, footer {
-    padding: 1em;
-    text-align: center;
   }
 
   .toggle-container {
@@ -41,8 +39,10 @@
     right: 10px;
     cursor:pointer;
     background: #ccc;
-    padding:5px 10px;
-    border-radius:5px;
+    padding:10px 15px;
+    border-radius: var(--button-radius);
+    font-size:1em;
+    z-index:999;
   }
 
   .content {
@@ -51,6 +51,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 2em;
   }
 
   .splash-screen {
@@ -58,23 +59,28 @@
   }
 
   .splash-screen h1 {
-    margin-bottom: 1em;
+    margin-bottom: 2em;
+    font-size: 1.8em;
   }
 
   .options {
     display:flex;
     flex-direction: column;
     gap:1em;
+    width: 80%;
+    max-width: 400px;
+    margin:0 auto;
   }
 
   .options button {
-    padding:0.7em 1em;
-    font-size:1.2em;
+    padding:1em;
+    font-size:1.5em;
     cursor:pointer;
     border:none;
-    border-radius:5px;
+    border-radius: var(--button-radius);
     background:#0066cc;
     color:#fff;
+    width:100%;
   }
 
   body.dark-mode .options button {
@@ -83,21 +89,28 @@
 
   .flashcard-container {
     text-align:center;
+    width:100%;
+    max-width: 600px;
+    margin:0 auto;
   }
 
   .flashcard {
     position: relative;
-    width: 200px;
-    height: 120px;
+    width: 80vw;
+    max-width: 350px;
+    height: 45vw;
+    max-height: 200px;
     margin: 2em auto;
     background: var(--card-bg-light);
     display:flex;
     align-items: center;
     justify-content: center;
-    font-size:2em;
-    border-radius:8px;
+    font-size:3em;
+    border-radius: var(--button-radius);
     box-shadow:0 0 5px rgba(0,0,0,0.2);
     cursor:pointer;
+    padding:1em;
+    box-sizing: border-box;
   }
 
   body.dark-mode .flashcard {
@@ -108,15 +121,22 @@
     display:flex;
     gap:1em;
     justify-content:center;
+    flex-wrap: wrap;
+    margin-top: 2em;
+    width: 100%;
+    max-width: 400px;
   }
 
   .answer-buttons button {
-    padding:0.5em 1em;
-    font-size:1em;
+    flex:1;
+    min-width: 45%;
+    padding:1em;
+    font-size:1.2em;
     cursor:pointer;
     border:none;
-    border-radius:5px;
+    border-radius: var(--button-radius);
     color:#fff;
+    text-align:center;
   }
 
   #correctBtn {
@@ -143,29 +163,37 @@
 
   .score-screen {
     text-align:center;
+    width:80%;
+    max-width:500px;
+    margin:0 auto;
   }
 
   .score-screen h2 {
     margin-bottom:1em;
+    font-size:1.8em;
   }
 
   .wrong-list {
     margin-top:1em;
+    text-align:left;
   }
 
   .wrong-list p {
     margin:0.5em 0;
+    font-size:1.2em;
   }
 
   .back-button {
     margin-top:2em;
-    padding:0.5em 1em;
-    font-size:1em;
+    padding:1em;
+    font-size:1.2em;
     cursor:pointer;
     background:#444;
     color:#fff;
     border:none;
-    border-radius:5px;
+    border-radius: var(--button-radius);
+    width: 100%;
+    max-width: 200px;
   }
 
   body.dark-mode .back-button {
@@ -179,7 +207,7 @@
 
   <!-- Splash Screen -->
   <div class="splash-screen" id="splashScreen">
-    <h1>Learn Kana</h1>
+    <h1>Select a Study Mode</h1>
     <div class="options">
       <button data-mode="hiragana">Hiragana</button>
       <button data-mode="katakana">Katakana</button>
@@ -191,7 +219,6 @@
   <!-- Flashcard and Quiz Screen -->
   <div class="flashcard-container" id="flashcardScreen" style="display:none;">
     <div class="flashcard" id="flashcard">A</div>
-
     <div class="answer-buttons">
       <button id="correctBtn">Correct</button>
       <button id="wrongBtn">Wrong</button>
@@ -347,10 +374,9 @@
   let currentMode = "";
   let currentIndex = 0;
   let wrongAnswers = [];
-  let isShowingChar = true; // track what is currently displayed on the flashcard
-
+  let isShowingChar = true;
   let activeSet = [];
-  let currentPosition = 0; // position in the activeSet
+  let currentPosition = 0;
 
   const splashScreen = document.getElementById("splashScreen");
   const flashcardScreen = document.getElementById("flashcardScreen");
@@ -363,7 +389,6 @@
   const backToMenuBtn = document.getElementById("backToMenuBtn");
   const modeToggle = document.getElementById("modeToggle");
 
-  // Dark mode toggle
   modeToggle.addEventListener("click", () => {
     document.body.classList.toggle("dark-mode");
   });
@@ -411,7 +436,6 @@
     else if(mode === "hiraganaWords") baseSet = hiraganaWords;
     else if(mode === "katakanaWords") baseSet = katakanaWords;
 
-    // Shuffle once and store in activeSet
     activeSet = baseSet.slice().sort(() => Math.random() - 0.5);
     currentPosition = 0;
   }
@@ -446,7 +470,6 @@
     if(currentIndex < 10 && (currentPosition + currentIndex) < activeSet.length) {
       showCard(activeSet[currentPosition + currentIndex]);
     } else {
-      // All 10 done or at end of activeSet
       showScore();
     }
   }
@@ -470,7 +493,6 @@
       repeatBtn.textContent = "Review Wrong Ones";
       repeatBtn.className = "back-button";
       repeatBtn.addEventListener("click", () => {
-        // Now focus on wrong items
         activeSet = wrongAnswers.slice();
         wrongAnswers = [];
         currentIndex = 0;
@@ -484,7 +506,6 @@
     } else {
       // Perfect score, move to the next 10 in activeSet
       currentPosition += 10;
-      // If we reached the end of activeSet, reshuffle
       if(currentPosition >= activeSet.length) {
         currentPosition = 0;
         activeSet = activeSet.slice().sort(() => Math.random() - 0.5);
